@@ -1,37 +1,46 @@
 package com.pluralsight;
 
-import java.sql.*;
+import com.mysql.cj.jdbc.ConnectionImpl;
 
 import java.sql.*;
 
 public class App {
+    public static void main(String[] args) throws SQLException {
+        String username = args[0];
+        String password = args[1];
 
-    public static void main(String[] args) throws SQLException, ClassNotFoundException {
-        // Optional: Uncomment if the driver still isn't loading
-        Class.forName("com.mysql.cj.jdbc.Driver");
+        //create a connection
+        Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/northwind",username, password);
+        System.out.println(connection);
 
-        // Connect to Northwind DB
-        String url = "jdbc:mysql://localhost:3306/northwind";
-        String username = "root"; // use your actual MySQL username
-        String password = "yearup"; // use your actual password
+        //create a SQL statement/query
+        String sql = """
+                     select
+                         productid,
+                         productname,
+                         unitprice,
+                         unitsinstock
+                     from products;
+                    """;
+        PreparedStatement preparedStatement = connection.prepareStatement(sql);
 
-        Connection connection = DriverManager.getConnection(url, username, password);
+        //execute the statement/query
+        ResultSet resultSet =  preparedStatement.executeQuery();
 
-        Statement statement = connection.createStatement();
+        //print header row
+        System.out.printf("%-4s %-40s %15s %10s%n", "Id", "Product Name", "Price", "Stock");
+        System.out.println("_________________________________________________________________________________");
 
-        // Query all product names
-        String query = "SELECT ProductName FROM Products";
-        ResultSet results = statement.executeQuery(query);
+        //loop through the results and display them
+        while (resultSet.next()){
+            int productId = resultSet.getInt("productid");
+            String productName = resultSet.getString("productname");
+            Double unitPrice = resultSet.getDouble("unitprice");
+            int unitsInStock = resultSet.getInt("unitsinstock");
 
-        // Print each product name
-        while (results.next()) {
-            String productName = results.getString("ProductName");
-            System.out.println(productName);
+            //print row
+            System.out.printf("%-4d %-40s %15.2f %10d%n", productId, productName, unitPrice, unitsInStock);
         }
 
-        // Cleanup
-        results.close();
-        statement.close();
-        connection.close();
     }
 }
